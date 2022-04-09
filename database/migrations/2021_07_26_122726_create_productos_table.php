@@ -23,7 +23,7 @@ class CreateProductosTable extends Migration
             //$table->timestamps();
 
             $table->string('nombre')->unique();
-            $table->float('precio')->unsigned();
+            //$table->float('precio')->unsigned();
         });
     }
 

@@ -22,13 +22,13 @@ class CreatePedidoProductoTable extends Migration
             $table->id();
             //$table->timestamps();
 
-            $table->integer('unidades')->unsigned()->nullable();
+            $table->integer('unidades')->unsigned();
 
             //FK
             $table->bigInteger('pedido_id')->unsigned();
-            $table->foreign('pedido_id')->references('id')->on('pedidos');
+            $table->foreign('pedido_id')->references('id')->on('pedidos')->onDelete('cascade')->onUpdate('cascade');
             $table->bigInteger('producto_id')->unsigned();
-            $table->foreign('producto_id')->references('id')->on('productos');
+            $table->foreign('producto_id')->references('id')->on('productos')->onDelete('cascade')->onUpdate('cascade');
 
         });
     }

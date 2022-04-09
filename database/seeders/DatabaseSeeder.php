@@ -20,20 +20,16 @@ class DatabaseSeeder extends Seeder
 
         Direccion::factory(10)->create();
 
-        
         $pedidos = Pedido::factory(30)->create()
             ->each(function($pedido){
                 $pedido->productos()->attach([
                     mt_rand(1, 10) => [
-                    //'created_at' => $this->faker->birth_date,
                     'unidades' => mt_rand(1, 3),
                     'pedido_id' => mt_rand(1, 10),
                     'producto_id' => mt_rand(1, 20),
                     ]
                 ]);
         });
-        
-
 
     }
 }

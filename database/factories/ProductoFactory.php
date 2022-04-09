@@ -25,7 +25,7 @@ class ProductoFactory extends Factory
 
         return [
             'nombre' => $this->faker->unique()->sentence(3),
-            'precio' => $this->faker->randomFloat($maxDecimals = 2, $min = 0, $max = 100),
+            //'precio' => $this->faker->randomFloat($maxDecimals = 2, $min = 0, $max = 100),
         ];
     }
 }

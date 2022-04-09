@@ -25,6 +25,8 @@ class Pedido extends Model
     ]; 
     
 
+    //RELACIONES..........................
+
     /**
      * Relacion de muchos a muchos -> creará una tabla pivote intermedia: pedidos_productos
      * Un producto pertenece a varios pedidos
@@ -41,7 +43,40 @@ class Pedido extends Model
      * Una direccion pertenece a varios pedidos
      */
     public function direccion(){
-        return $this->hasOne(Direccion::class);
+        //return $this->hasOne(Direccion::class);
+        return $this->belongsTo(Direccion::class);
     }
+
+
+    //SCOPES..........................
+
+    /**
+     * Devuelve el estado del pedido
+     */
+    public function scopeEstado($query, $estado){
+        if($estado){
+            return $query->where('estado_pedido', 'LIKE', "%$estado%");
+        }
+    }
+
+
+    /**
+     * Devuelve el país del pedido
+     */
+    public function scopePais($query, $pais){
+        if($pais){
+            //dd($query);
+            return $query->join('direccions', 'direccions.id', '=', 'pedidos.direccion_id')
+                ->select('pedidos.*')
+                ->where('direccions.pais', 'LIKE', "%$pais%");
+        }
+    }
+
+    /*
+    SELECT * FROM pedidos as p
+    JOIN direccions as d
+    ON d.id = p.direccion_id
+    WHERE ...
+    */
 
 }
