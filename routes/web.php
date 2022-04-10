@@ -30,6 +30,8 @@ Route::get('/', function () {
 */
 
 Route::get('/', 'PedidoController@index')->name('pedidos.index');
+Route::get('/crear', 'PedidoController@create')->name('pedidos.create');
 Route::get('/{pedido}', 'PedidoController@show')->name('pedidos.show');
-Route::get('/crear', 'RecursoController@create')->name('pedidos.create');
-Route::post('/', 'RecursoController@store')->name('pedidos.store');
+
+Route::post('/', 'PedidoController@store')->name('pedidos.store');
+Route::match(['put', 'patch'], '/{pedido}', 'PedidoController@update')->name('pedidos.update');

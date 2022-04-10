@@ -22,7 +22,7 @@ class CreatePedidoProductoTable extends Migration
             $table->id();
             //$table->timestamps();
 
-            $table->integer('unidades')->unsigned();
+            $table->integer('unidades')->unsigned()->default(1);
 
             //FK
             $table->bigInteger('pedido_id')->unsigned();

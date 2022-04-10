@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Carbon\Carbon;
 
 class CreatePedidosTable extends Migration
 {
@@ -23,7 +24,7 @@ class CreatePedidosTable extends Migration
             $table->timestamps();
 
             $table->set('estado_pedido', 
-                ['pago aceptado', 'preparacion en proceso', 'pago rechazado', 'enviado']);
+                ['pago aceptado', 'preparacion en proceso', 'pago rechazado', 'enviado'])->default('preparacion en proceso');
             //$table->float('total')->unsigned();
 
             //FK

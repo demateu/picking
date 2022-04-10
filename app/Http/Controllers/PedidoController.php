@@ -3,9 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Pedido;
+use App\Models\Direccion;
 use Illuminate\Http\Request;
+use App\Models\Producto;
+use Illuminate\Support\Facades\Validator;
+use Carbon\Carbon;
+use DateTime;
 
-use Illuminate\Support\Facades\DB;//import para transacciones (BBDD)
+use Illuminate\Support\Facades\DB;
 
 class PedidoController extends Controller
 {
@@ -15,17 +20,13 @@ class PedidoController extends Controller
      * Muestra los pedidos
      */
     public function index(Request $request){
-
-        //return $this->showAll(Recurso::activo()->get());
-        //$recursos = $this->showAll(Recurso::activo()->get());
-        //$recursos = $this->showAll(Recurso::all()->toQuery());
         $estado_pedido = $request->get('estado_pedido');
         $pais = $request->get('pais');
 
         $pedidos = Pedido::orderBy('estado_pedido', 'ASC')
             ->estado($estado_pedido)
             ->pais($pais)
-            ->paginate(5);
+            ->paginate(10);
         
         //para no perder los resultados del filtrado con la paginación
         $pedidos->appends([
@@ -39,93 +40,77 @@ class PedidoController extends Controller
 
     /**
      * Retorna una vista con los detalles del pedido
-     * Show the form for creating a new resource.
      *
      * @return \Illuminate\Http\Response
      */
-    //public function create()
-    public function crear()
-    {
-        $carrito = $this->carritoService->getFromCookie();
-
-        if(!isset($carrito) || ($carrito->recursos->isEmpty() && $carrito->pildoras->isEmpty())){
-            return redirect()
-                ->back()
-                ->withErrors("Tu carrito está vacío!");
-        }
-
-        return view('pedidos.crear')->with([
-            'carrito' => $carrito,
+    public function create(){
+        return view('pedidos.create')->with([
+            'productos' => Producto::all(),
         ]);
     }
 
+
     /**
      * Store a newly created resource in storage.
-     * 
-     * Debe haber un usuario autenticado cuando se ejecute esta funcion
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  \Illuminate\Http\PedidoRequest  $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
     {
-        //ponemos las acciones dentro de una transaccion
         return DB::transaction(function () use($request) {
-            $user = $request->user();
-            //creamos un pedido asociado al user identificado
-            $pedido = $user->pedidos()->create([
-                'status' => 'pendiente',
+
+            $validator = Validator::make($request->all(), [
+                'nombre' => ['required','max:255'],
+                'apellidos' => ['required','max:255'],
+                'direccion' => ['required','max:255'],
+                'pais' => ['required','max:255'],
+                'producto' => ['required'],
+                //'unidades' => ['nullable'],
+                //'estado-pedido' => ['required'],
             ]);
-    
-            //enviar los datos/productos del carrito al pedido
-            $carrito = $this->carritoService->getFromCookie();
-            $carrito_id = $carrito->id;
-    
-            //SI NO QUEREMOS AÑADIR CANTIDAD:
-            //$carrito->recursos()->attach($carrito->recursos);
-            //..y pildoras?
-            //SINO > haremos una lista del id de los productos con la cantidad
-                //Recursos
-            $recursosCarritoConCantidad = $carrito //no sé porque salta este error..
-                                        ->recursos
-                                        ->mapWithKeys(function($recurso){
-                                            $element1[$recurso->id] = [
-                                                'cantidad'=> $recurso->pivot->cantidad,
-                                                'producto_tipo' => 'App\Models\Recurso',
-                                                'recurso_id' => $recurso->id,
-                                                'pildora_id'=> NULL,
-                                            ];
-                                                
-                                            return $element1;
-                                        });
-    
-            $arrayRecursos = $recursosCarritoConCantidad ->toArray();
-    
-                //Pildoras
-            $pildorasCarritoConCantidad = $carrito //no sé porque salta este error..
-                                        ->pildoras
-                                        ->mapWithKeys(function($pildora){
-                                            $element2[$pildora->id] = [
-                                                'cantidad'=> $pildora->pivot->cantidad,
-                                                'producto_tipo' => 'App\Models\Pildora',
-                                                'pildora_id' => $pildora->id,
-                                                'recurso_id' => NULL,
-                                            ];
-                    
-                                            return $element2;
-                                        });
-                                        
-            $arrayPildoras = $pildorasCarritoConCantidad ->toArray();
-            //$resultado = array_merge($array1, $array2);
-            $arrayPedidos = $arrayRecursos + $arrayPildoras;
-    
-            //$pedido->recursos()->attach($recursosCarritoConCantidad ->toArray());
-            $pedido->recursos()->attach($arrayPedidos);
-            //dd($pedido);
-            return redirect()->route('pedidos.pagos.crear', ['pedido' => $pedido]);            
-        });
+
+            if ($validator->fails()) {
+                return redirect()->back()
+                            ->withErrors($validator)
+                            ->withInput();
+            }
+
+            $validated = $validator->validated();
+
+
+            if($validated){
+
+                //crear direccion del envio
+                $direccion = Direccion::create([
+                    'nombre' => $validated['nombre'],
+                    'apellidos' => $validated['apellidos'],
+                    'direccion' => $validated['direccion'],
+                    'pais' => $validated['pais'],
+                ]);
+
+                //crear pedido
+                $pedido = Pedido::create([
+                    'direccion_id' => $direccion->id,
+                    'created_at' => Carbon::now(),//no guarda el dato
+                ]);
+
+                //añadir productos al pedido
+                foreach($validated['producto'] as $producto){
+                    $pedido->productos()->attach([
+                        //'unidades' => mt_rand(1, 3),
+                        //'pedido_id' => mt_rand(1, 10),
+                        'producto_id' => $producto,
+                    ]);
+                }
+            }
+
+            return redirect('/')->withSuccess("Pedido {$pedido->id} creado!");
+
+        }, 5); 
 
     }
+    
 
     /**
      * Display the specified resource.
@@ -133,12 +118,13 @@ class PedidoController extends Controller
      * @param  \App\Models\Pedido  $pedido
      * @return \Illuminate\Http\Response
      */
-    /*
     public function show(Pedido $pedido)
     {
-        //
+        return view('pedidos.show')->with([
+            'pedido' => $pedido,
+        ]);
     }
-    */
+    
 
     /**
      * Show the form for editing the specified resource.
@@ -153,19 +139,33 @@ class PedidoController extends Controller
     }
     */
 
+
     /**
-     * Update the specified resource in storage.
+     * @author demateu
+     * 
+     * Si se recibe el estado del pedido, actualiza el campo
+     * en el pedido que recibe por parámetro
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  \App\Models\Pedido  $pedido
      * @return \Illuminate\Http\Response
      */
-    /*
     public function update(Request $request, Pedido $pedido)
     {
-        //
+        return DB::transaction(function () use($request, $pedido) {
+
+        if($request->has('estado_pedido')){
+            $pedido->estado_pedido = $request->get('estado_pedido');
+            $pedido->direccion_id = $pedido->direccion_id;
+            $pedido->updated_at = Carbon::now();
+            $pedido->save();
+        }
+
+        return redirect('/')->withSuccess("Pedido {$pedido->id} actualizado!");
+
+        }, 5); 
     }
-    */
+    
 
     /**
      * Remove the specified resource from storage.
@@ -179,27 +179,6 @@ class PedidoController extends Controller
         //
     }
     */
-
-
-    /*
-    public function quitoProductoPedido(Request $request, $id_producto, Carrito $carrito )
-    {
-        $cantidad = ($request->cantidad);//cantidad que tiene el producto que se quiere eliminar
-        $tipo_producto = $request->tipo;
-        $id = $request->id; //REC-n
-
-        if($tipo_producto === 'App\Models\Pildora'){
-            $carrito->pildoras()->detach($id_producto);//ahora esta quitando todos los de este id, sin contarlos
-        }
-        if($tipo_producto === 'App\Models\Recurso'){
-            $carrito->recursos()->detach($id_producto);//ahora esta quitando todos los de este id, sin contarlos
-        }
-        
-        $cookie = $this->carritoService->crearCookie($carrito);
-        return redirect()->back()->cookie($cookie);
-    }  
-    */  
-
 
 
 }

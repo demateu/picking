@@ -28,7 +28,7 @@ class DireccionFactory extends Factory
             'apellidos' => $this->faker->name(),
             'direccion' => $this->faker->address,
             'pais' => $this->faker->country,//deberia de estar en una tabla aparte pero lo pongo aqui por simplicidad
-            'telefono' => $this->faker->numberBetween(600000000, 699999999),
+            //'telefono' => $this->faker->numberBetween(600000000, 699999999),
         ];
     }
 }

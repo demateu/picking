@@ -26,7 +26,7 @@ class CreateDireccionsTable extends Migration
             $table->string('apellidos');
             $table->string('direccion');
             $table->string('pais');
-            $table->integer('telefono');
+            //$table->integer('telefono');
 
         });
     }

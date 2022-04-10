@@ -54,9 +54,8 @@ class Pedido extends Model
      * Devuelve el estado del pedido
      */
     public function scopeEstado($query, $estado){
-        if($estado){
+        if($estado)
             return $query->where('estado_pedido', 'LIKE', "%$estado%");
-        }
     }
 
 
@@ -64,19 +63,12 @@ class Pedido extends Model
      * Devuelve el país del pedido
      */
     public function scopePais($query, $pais){
-        if($pais){
+        if($pais)
             //dd($query);
             return $query->join('direccions', 'direccions.id', '=', 'pedidos.direccion_id')
                 ->select('pedidos.*')
                 ->where('direccions.pais', 'LIKE', "%$pais%");
-        }
     }
 
-    /*
-    SELECT * FROM pedidos as p
-    JOIN direccions as d
-    ON d.id = p.direccion_id
-    WHERE ...
-    */
 
 }

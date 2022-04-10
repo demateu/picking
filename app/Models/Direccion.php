@@ -23,7 +23,7 @@ class Direccion extends Model
         'apellidos',
         'direccion',
         'pais',
-        'telefono'
+        //'telefono'
     ]; 
     
 
